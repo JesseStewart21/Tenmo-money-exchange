@@ -1,16 +1,17 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.TransferRequest;
 
 import java.math.BigDecimal;
 
 public interface AccountDao {
-    Account findAccountByUserId(int id);
+    Account findAccountByUserId(int userId);
 
     BigDecimal getBalanceByAccountId(int accountId);
 
 
-    void transfer(int withdrawAccount, int depositAccount, BigDecimal amount);
+    void transfer(TransferRequest transfer);
 
 
 

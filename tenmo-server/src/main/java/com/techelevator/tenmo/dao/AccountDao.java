@@ -11,6 +11,7 @@ public interface AccountDao {
 
     BigDecimal deposit(BigDecimal amount, int accountId);
 
+    Boolean transfer(int withdrawAccount, int depositAccount, BigDecimal amount);
 
 
 

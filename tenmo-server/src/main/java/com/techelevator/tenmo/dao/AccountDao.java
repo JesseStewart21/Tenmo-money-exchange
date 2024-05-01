@@ -9,7 +9,7 @@ public interface AccountDao {
 
     BigDecimal withdraw(BigDecimal amount, int accountId);
 
-
+    BigDecimal deposit(BigDecimal amount, int accountId);
 
 
 

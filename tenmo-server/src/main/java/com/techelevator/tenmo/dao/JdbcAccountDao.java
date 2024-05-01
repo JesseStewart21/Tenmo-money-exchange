@@ -69,9 +69,33 @@ public class JdbcAccountDao implements AccountDao{
         return newBalance;
     }
 
+    @Override
+    public BigDecimal deposit(BigDecimal amount, int accountId){
+        BigDecimal newBalance = getBalanceByAccountId(accountId);
 
-    
+        String sql = "UPDATE\n" +
+                "SET balance = ?\n" +
+                "WHERE account_id = ?; ";
+        try {
+            newBalance = jdbcTemplate.queryForObject(sql, BigDecimal.class, accountId);
+        } catch (Exception ex){
+            throw new RuntimeException();
+        }
+        return newBalance;
+    }
 
+    public Boolean transfer(int withdrawAccount, int depositAccount, BigDecimal amount){
+        boolean transactionSuccessful = false;
+        BigDecimal currentBalance = getBalanceByAccountId(withdrawAccount);
+        BigDecimal newBalance = withdraw(amount, withdrawAccount);
+
+        if(currentBalance.compareTo(newBalance) == 0){
+            return transactionSuccessful = false;
+        }
+
+
+
+    }
 
 
 

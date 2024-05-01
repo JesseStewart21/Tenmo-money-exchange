@@ -1,9 +1,12 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.Account;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -17,19 +20,19 @@ public class JdbcAccountDao implements AccountDao{
     }
 
     @Override
-    public int findAccountByUserId(int id){
-        int accountId;
+    public Account findAccountByUserId(int id){
+       SqlRowSet account = null;
         //pull the account id from database with the userid
-        String sql = "SELECT account_id\n" +
+        String sql = "SELECT account_id, balance\n" +
                 "FROM account\n" +
                 "WHERE user_id = ?;";
         try{
-            accountId = jdbcTemplate.queryForObject(sql, int.class, id);
+            account = jdbcTemplate.queryForRowSet(sql, id);
         } catch (NullPointerException | EmptyResultDataAccessException ex){
 
             throw new RuntimeException("Something Went Wrong");
         }
-            return accountId;
+            return account;
     }
 
     @Override
@@ -48,69 +51,34 @@ public class JdbcAccountDao implements AccountDao{
         return balance;
     }
 
-    @Override
-    public BigDecimal withdraw(BigDecimal amount, int accountId){
-       //what is the current balance of the account
-        BigDecimal newBalance = getBalanceByAccountId(accountId);
 
-        //if the amount they want to withdraw is less than or equal to the current balance, keep going
-        if(amount.compareTo(newBalance) == -1 || (amount.compareTo(newBalance) == 0)){
-            newBalance = amount.subtract(amount);
-//update the balance in the database to lesser amount
-            String sql = "UPDATE\n" +
-                    "SET balance = ?\n" +
-                    "WHERE account_id = ?; ";
-            try {
-                newBalance = jdbcTemplate.queryForObject(sql, BigDecimal.class, accountId);
-            } catch (Exception ex){
-                throw new RuntimeException();
-            }//return the new lesser amount balance
-            return newBalance;
-
-            //if amount they want to withdraw was mroe than the current balance, then print error message
-        } else {
-            System.out.println("The transaction could not be completed, account can not be less than $0");
-        }//return original balance
-        return newBalance;
-    }
-
-    @Override
-    public BigDecimal deposit(BigDecimal amount, int accountId){
-        //add amount to current balance
-        BigDecimal newBalance = getBalanceByAccountId(accountId). add(amount);
-    //update the balance in the databse to the new amount
-        String sql = "UPDATE\n" +
-                "SET balance = ?\n" +
-                "WHERE account_id = ?; ";
-        try {
-            newBalance = jdbcTemplate.queryForObject(sql, BigDecimal.class, accountId);
-        } catch (Exception ex){
-            throw new RuntimeException();
-        }//return new balance
-        return newBalance;
-    }
-
-    public Boolean transfer(int withdrawAccount, int depositAccount, BigDecimal amount){
-       //read in current balance of the withdrawing account
-        BigDecimal startingWithdrawBalance = getBalanceByAccountId(withdrawAccount);
-        //attempt to withraw from the account, if balance would be below 0, the withdraw method will return existing balance
-        BigDecimal newWithdrawBalance = withdraw(amount, withdrawAccount);
-
-        //if the starting balance is exactly the same as the balance returned from withdraw, the withdraw was
-        //unsuccessful, and transaction should be stopped.
-        if(startingWithdrawBalance.compareTo(newWithdrawBalance) == 0){
-            return  false;
-        }
-        //withdraw went through, so continue to deposit
-        deposit(amount, depositAccount);
-
-        //transfer went through!
-    return true;
-
-    }
+@Transactional
+public void transfer(int withdrawAccount, int depositAccount, BigDecimal amount) {
+        //what is current withdrawing accounts balance
+    BigDecimal startingWithdrawBalance = getBalanceByAccountId(withdrawAccount);
+    //what will be the new balances if the transfer is successful
+    BigDecimal newWithdrawBalance = getBalanceByAccountId(withdrawAccount).subtract(amount);
+    BigDecimal newDepositBalance = getBalanceByAccountId(depositAccount).subtract(amount);
 
 
+//if the amount is equal or less than the withdrawing account's balance, and the amount is not 0 or negative, set to true
+    Boolean results = (amount.compareTo(startingWithdrawBalance) <= 0) && (amount.compareTo(new BigDecimal("0.0")) > 0);
 
+
+    //push the code to the database
+    String sql = "UPDATE\n" +
+            "SET balance = ?\n" +
+            "WHERE account_id = ?;" +
+            "UPDATE\n" +
+            "SET balance = ?\n" +
+            "Where account_id = ?;";
+
+    jdbcTemplate.update(sql, newWithdrawBalance, withdrawAccount, newDepositBalance, depositAccount);
+   //if the transfer cannot be completed, throw exception so that it does not post to database
+if (!results){
+    throw new RuntimeException("Transfer failed.");
+}
+}
 
 
 }

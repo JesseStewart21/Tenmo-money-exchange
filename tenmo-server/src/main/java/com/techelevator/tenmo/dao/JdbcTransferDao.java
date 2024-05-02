@@ -85,13 +85,15 @@ public class JdbcTransferDao implements TransferDao {
 
                 if (validTransfer) {
                     //if valid run the transfer as follows
-                    String sql =
+                    String sql1 =
                             "UPDATE account\n" +
                             "SET balance = ?\n" +
                             "WHERE account_id = ?;\n" +
                             "UPDATE account\n" +
                             "SET balance = ?\n" +
-                            "WHERE account_id = ?;\n" +
+                            "WHERE account_id = ?;\n";
+
+                    String sql2 =
                                     "INSERT INTO transfer(transfer_type_id,\n" +
                                     "transfer_status_id, account_from, account_to, amount)\n" +
                                     "VALUES (?, ?, ?, ?, ?) RETURNING transfer_id;\n" +
@@ -111,10 +113,14 @@ public class JdbcTransferDao implements TransferDao {
 
                     //create a new transferId
                     try {
-                       int results = jdbcTemplate.queryForObject(sql, Integer.class, newAccountFromBalance,
-                               transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo(), transfer.getTransferTypeId(),
+                        jdbcTemplate.update(sql1, newAccountFromBalance,
+                                transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo());
+
+                        int results2 = jdbcTemplate.queryForObject(sql2, Integer.class, transfer.getTransferTypeId(),
                                 transfer.getTransferStatusId(), transfer.getAccountFrom(),
                                 transfer.getAccountTo(), transfer.getAmount());
+
+
                     } catch (NullPointerException | EmptyResultDataAccessException ex) {
                         throw new RuntimeException("Something Went Wrong");
                     }

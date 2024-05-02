@@ -115,6 +115,7 @@ public class JdbcTransferDao implements TransferDao {
                                transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo(), transfer.getTransferTypeId(),
                                 transfer.getTransferStatusId(), transfer.getAccountFrom(),
                                 transfer.getAccountTo(), transfer.getAmount());
+
                     } catch (NullPointerException | EmptyResultDataAccessException ex) {
                         throw new RuntimeException("Something Went Wrong");
                     }

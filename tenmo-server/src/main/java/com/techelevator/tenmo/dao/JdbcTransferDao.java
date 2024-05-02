@@ -26,7 +26,7 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> findAllBtyId(int accountId) {
+    public List<Transfer> findAllById(int accountId) {
         List<Transfer> transfers = new ArrayList<>();
         String sql = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_from, account_to, amount\n" +
                 "FROM transfer\n" +
@@ -43,7 +43,7 @@ public class JdbcTransferDao implements TransferDao {
 
 
     @Override
-    public Transfer findTransferById(int transfer_id) {
+    public Transfer findTransferById(int transferId) {
         Transfer transfer = null;
 
         String sql = "SELECT transfer_id, transfer_type_id, " +
@@ -52,7 +52,7 @@ public class JdbcTransferDao implements TransferDao {
                 "WHERE transfer_id = ?;";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transfer_id);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transferId);
 
             while (results.next()) {
                 transfer = mapRowToTransfer(results);
@@ -67,20 +67,25 @@ public class JdbcTransferDao implements TransferDao {
     public int createTransfer(Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
         //Making sure you can only send to a different account
         int transferId =0;
+        Boolean validTransfer = false;
+        BigDecimal amount = transfer.getAmount();
+
         if (transfer.getAccountFrom() != transfer.getAccountTo()) {
 
             //==1 is to send money from another acct
             if (transfer.getTransferTypeId() == 1) {
                 int accountFrom = transfer.getAccountFrom();
-                BigDecimal amount = transfer.getAmount();
 
                 //checking to make sure transfer amount isn't more than balance amount & a positive number
-                Boolean validTransfer = (amount.compareTo(accountFromBalance) <= 0) &&
+                 validTransfer = (amount.compareTo(accountFromBalance) <= 0) &&
                         (amount.compareTo(new BigDecimal("0.0")) > 0);
+            }else {
+                validTransfer = true;
+            }
 
 
                 if (validTransfer) {
-                //if valid run the transfer as follows
+                    //if valid run the transfer as follows
                     String sql = "START TRANSACTION;\n" +
                             "INSERT INTO transfer(transfer_type_id,\n" +
                             "transfer_status_id, account_from, account_to, amount)\n" +
@@ -93,23 +98,31 @@ public class JdbcTransferDao implements TransferDao {
                             "SET balance = ?\n" +
                             "WHERE account_id = ?;\n" + "COMMIT;";
 
-
-                    BigDecimal newAccountFromBalance = accountFromBalance.subtract(amount);
-                    BigDecimal newAccountToBalance = accountToBalance.add(amount);
+                  //tracking balances
+                    BigDecimal newAccountFromBalance = accountFromBalance;
+                    BigDecimal newAccountToBalance = accountToBalance;
+                    if (transfer.getTransferTypeId() == 1) {
+                        //for send transfers, automatically set new balances
+                       newAccountFromBalance = accountFromBalance.subtract(amount);
+                       newAccountToBalance = accountToBalance.add(amount);
+                    } else {
+                        //for request transfers, build the transfer but set status to pending, and do not change the amounts.
+                        transfer.setTransferStatusId(1);
+                    }
 
 
                     //create a new transferId
-                    try{
+                    try {
                         transferId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getTransferTypeId(),
                                 transfer.getTransferStatusId(), transfer.getAccountFrom(),
                                 transfer.getAccountTo(), transfer.getAmount(), newAccountFromBalance,
                                 transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo());
-                    } catch (NullPointerException | EmptyResultDataAccessException ex){
+                    } catch (NullPointerException | EmptyResultDataAccessException ex) {
                         throw new RuntimeException("Something Went Wrong");
                     }
                 }
             }
-        }
+
             return transferId;
         }
         

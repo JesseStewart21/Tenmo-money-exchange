@@ -2,10 +2,13 @@ package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Transfer;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface TransferDao {
-    public Transfer findTransferById(int transfer_id);
-    public List<Transfer> findAllBtyId(int accountId);
+     Transfer findTransferById(int transferId);
+     List<Transfer> findAllById(int accountId);
+
+     int createTransfer(Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance);
 
 }

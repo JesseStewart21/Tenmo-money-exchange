@@ -11,7 +11,6 @@ public interface AccountDao {
     BigDecimal getBalanceByAccountId(int accountId);
 
 
-    void transfer(Transfer transfer);
 
 
 

@@ -25,14 +25,7 @@ public class TransactionController {
     public BigDecimal getBalanceByAccountId(@PathVariable int accountId){
         return accountDao.getBalanceByAccountId(accountId);
     }
-     @RequestMapping(path ="/account/send_transfer", method = RequestMethod.PUT)
-     public void transfer(@RequestBody Transfer transfer){
-      try {
-          accountDao.transfer(transfer);
-      }catch (Exception ex){
-          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Something went wrong here.");
-      }
-     }
+
 //created a class for a transfer object cuz couldn't figure out how else to read the json body request, in debug
     //this transfer method seems to work right up unitl it sends to the database
     //maybe its the double loaded sql request?  will look into more tomorrow

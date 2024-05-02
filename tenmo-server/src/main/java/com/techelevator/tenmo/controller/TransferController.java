@@ -16,7 +16,7 @@ public class TransferController {
     private TransferDao transferDao;
 
 
-@RequestMapping(path = "/find_transfer/{transfer_id}", method = RequestMethod.GET)
+@RequestMapping(path = "/find_transfer/{transferId}", method = RequestMethod.GET)
     public Transfer findTransferbyId(@PathVariable int transferId){
         return transferDao.findTransferById(transferId);
     }

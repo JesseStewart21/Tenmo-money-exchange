@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -24,7 +25,21 @@ public class JdbcTransferDao implements TransferDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-   // List<Transfer> findAllBtyId();
+    @Override
+    public List<Transfer> findAllBtyId(int accountId) {
+        List<Transfer> transfers = new ArrayList<>();
+        String sql = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_from, account_to, amount\n" +
+                "FROM transfer\n" +
+                "WHERE account_from = ? OR account_to = ?;";
+
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountId, accountId);
+        while (results.next()) {
+            Transfer transfer = mapRowToTransfer(results);
+            transfers.add(transfer);
+        }
+        return transfers;
+
+    }
 
 
     @Override
@@ -48,63 +63,82 @@ public class JdbcTransferDao implements TransferDao {
         return transfer;
     }
 
+    //when calling from controller, call acct dao and pass it in here...take acct id of from and send to receiver
+    public int createTransfer(Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
+        //Making sure you can only send to a different account
+        int transferId =0;
+        if (transfer.getAccountFrom() != transfer.getAccountTo()) {
 
-/*
-    @Transactional
-    public void transfer(Transfer transfer) {
-        //what is current withdrawing accounts balance
-        BigDecimal startingWithdrawBalance = getBalanceByAccountId(transfer.getWithdrawAccountId());
-        //what will be the new balances if the transfer is successful
-        BigDecimal newWithdrawBalance = getBalanceByAccountId(transfer.getWithdrawAccountId()).subtract(transfer.getAmount());
-        BigDecimal newDepositBalance = getBalanceByAccountId(transfer.getDepositAccountId()).add(transfer.getAmount());
+            //==1 is to send money from another acct
+            if (transfer.getTransferTypeId() == 1) {
+                int accountFrom = transfer.getAccountFrom();
+                BigDecimal amount = transfer.getAmount();
+
+                //checking to make sure transfer amount isn't more than balance amount & a positive number
+                Boolean validTransfer = (amount.compareTo(accountFromBalance) <= 0) &&
+                        (amount.compareTo(new BigDecimal("0.0")) > 0);
 
 
-//if the amount is equal or less than the withdrawing account's balance, and the amount is not 0 or negative, set to true
-        Boolean results = ((transfer.getAmount()).compareTo(startingWithdrawBalance) <= 0) && ((transfer.getAmount()).compareTo(new BigDecimal("0.0")) > 0);
+                if (validTransfer) {
+                //if valid run the transfer as follows
+                    String sql = "START TRANSACTION;\n" +
+                            "INSERT INTO transfer(transfer_type_id,\n" +
+                            "transfer_status_id, account_from, account_to, amount)\n" +
+                            "VALUES (?, ?, ?, ?, ?);\n" +
+                            "RETURNING transfer_id\n" +
+                            "UPDATE account\n" +
+                            "SET balance = ?\n" +
+                            "WHERE account_id = ?;\n" +
+                            "UPDATE account\n" +
+                            "SET balance = ?\n" +
+                            "WHERE account_id = ?;\n" + "COMMIT;";
 
-        if (results) {
 
-            //push the code to the database
-            String sql = "UPDATE\n" +
-                    "SET balance = ?\n" +
-                    "WHERE account_id = ?;" +
-                    "UPDATE\n" +
-                    "SET balance = ?\n" +
-                    "Where account_id = ?;";
+                    BigDecimal newAccountFromBalance = accountFromBalance.subtract(amount);
+                    BigDecimal newAccountToBalance = accountToBalance.add(amount);
 
-            jdbcTemplate.update(sql, newWithdrawBalance, transfer.getWithdrawAccountId(), newDepositBalance, transfer.getDepositAccountId());
-            //if the transfer should not be completed, throw exception so that it does not post to database
-        }else{
-            throw new RuntimeException("Transfer failed.");
+
+                    //create a new transferId
+                    try{
+                        transferId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getTransferTypeId(),
+                                transfer.getTransferStatusId(), transfer.getAccountFrom(),
+                                transfer.getAccountTo(), transfer.getAmount(), newAccountFromBalance,
+                                transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo());
+                    } catch (NullPointerException | EmptyResultDataAccessException ex){
+                        throw new RuntimeException("Something Went Wrong");
+                    }
+                }
+            }
+        }
+            return transferId;
+        }
+        
+
+        private Transfer mapRowToTransfer (SqlRowSet results){
+            Transfer transfer = new Transfer();
+
+            int transferId = results.getInt("transfer_id");
+            transfer.setTransferId(transferId);
+
+
+            int transferTypeId = results.getInt("transfer_type_id");
+            transfer.setTransferTypeId(transferTypeId);
+
+            int transferStatusId = results.getInt("transfer_status_id");
+            transfer.setTransferStatusId(transferStatusId);
+
+            int accountFrom = results.getInt("account_from");
+            transfer.setAccountFrom(accountFrom);
+
+            int accountTo = results.getInt("account_to");
+            transfer.setAccountTo(accountTo);
+
+            BigDecimal amount = results.getBigDecimal("amount");
+            transfer.setAmount(amount);
+
+
+            return transfer;
+
+
         }
     }
-*/
-
-    private Transfer mapRowToTransfer(SqlRowSet results) {
-        Transfer transfer = new Transfer();
-
-        int transferId = results.getInt("transfer_id");
-        transfer.setTransferId(transferId);
-
-
-        int transferTypeId = results.getInt("transfer_type_id");
-        transfer.setTransferTypeId(transferTypeId);
-
-        int transferStatusId = results.getInt("transfer_status_id");
-        transfer.setTransferStatusId(transferStatusId);
-
-        int accountFrom = results.getInt("account_from");
-        transfer.setAccountFrom(accountFrom);
-
-        int accountTo = results.getInt("account_to");
-        transfer.setAccountTo(accountTo);
-
-        BigDecimal amount = results.getBigDecimal("amount");
-        transfer.setAmount(amount);
-
-
-        return transfer;
-
-
-    }
-}

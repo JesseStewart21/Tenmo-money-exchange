@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Component
-public class JdbcTransferDao implements TransferDao{
+public class JdbcTransferDao implements TransferDao {
     @Autowired
     private final JdbcTemplate jdbcTemplate;
 
@@ -24,29 +24,28 @@ public class JdbcTransferDao implements TransferDao{
         this.jdbcTemplate = jdbcTemplate;
     }
 
-List<Transfer> findAllBtyId();
+    List<Transfer> findAllBtyId();
 
 
+    public Transfer findTransferById(int transfer_id) {
+        Transfer transfer = null;
 
-public Transfer findTransferById(int transfer_id) {
-    Transfer transfer = null;
+        String sql = "SELECT transfer_id, transfer_type_id, " +
+                "transfer_status_id, account_from, account_to, amount\n" +
+                "FROM transfer\n" +
+                "WHERE transfer_id = ?;";
 
-    String sql = "SELECT transfer_id, transfer_type_id, " +
-            "transfer_status_id, account_from, account_to, amount\n" +
-            "FROM transfer\n" +
-            "WHERE transfer_id = ?;";
+        try {
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transfer_id);
 
-    try {
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, transfer_id);
-
-        while (results.next()){
-            transfer = mapRowToTransfer(results);
+            while (results.next()) {
+                transfer = mapRowToTransfer(results);
+            }
+        } catch (NullPointerException | EmptyResultDataAccessException ex) {
+            throw new RuntimeException("Something Went Wrong");
         }
-    } catch (NullPointerException | EmptyResultDataAccessException ex){
-        throw new RuntimeException("Something Went Wrong");
-    }
         return transfer;
-}
+    }
 
 
 /*
@@ -80,7 +79,7 @@ public Transfer findTransferById(int transfer_id) {
     }
 */
 
-    private Transfer mapRowToTransfer(SqlRowSet results){
+    private Transfer mapRowToTransfer(SqlRowSet results) {
         Transfer transfer = new Transfer();
 
         int transferId = results.getInt("transfer_id");
@@ -106,9 +105,5 @@ public Transfer findTransferById(int transfer_id) {
         return transfer;
 
 
-
-
-
-
-
+    }
 }

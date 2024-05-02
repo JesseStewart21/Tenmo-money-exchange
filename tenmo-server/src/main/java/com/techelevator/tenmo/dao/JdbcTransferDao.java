@@ -66,7 +66,6 @@ public class JdbcTransferDao implements TransferDao {
     //when calling from controller, call acct dao and pass it in here...take acct id of from and send to receiver
     public int createTransfer(Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
         //Making sure you can only send to a different account
-        int transferId =0;
         Boolean validTransfer = false;
         BigDecimal amount = transfer.getAmount();
 
@@ -79,25 +78,24 @@ public class JdbcTransferDao implements TransferDao {
                 //checking to make sure transfer amount isn't more than balance amount & a positive number
                  validTransfer = (amount.compareTo(accountFromBalance) <= 0) &&
                         (amount.compareTo(new BigDecimal("0.0")) > 0);
-            }else {
+            }else {//send any request amount
                 validTransfer = true;
             }
 
 
                 if (validTransfer) {
                     //if valid run the transfer as follows
-                    String sql = "START TRANSACTION;\n" +
-                            "INSERT INTO transfer(transfer_type_id,\n" +
-                            "transfer_status_id, account_from, account_to, amount)\n" +
-                            "VALUES (?, ?, ?, ?, ?);\n" +
-                            "RETURNING transfer_id\n" +
+                    String sql =
                             "UPDATE account\n" +
                             "SET balance = ?\n" +
                             "WHERE account_id = ?;\n" +
                             "UPDATE account\n" +
                             "SET balance = ?\n" +
-                            "WHERE account_id = ?;\n" + "COMMIT;";
-
+                            "WHERE account_id = ?;\n" +
+                                    "INSERT INTO transfer(transfer_type_id,\n" +
+                                    "transfer_status_id, account_from, account_to, amount)\n" +
+                                    "VALUES (?, ?, ?, ?, ?) RETURNING transfer_id;\n" +
+                                    "\n";
                   //tracking balances
                     BigDecimal newAccountFromBalance = accountFromBalance;
                     BigDecimal newAccountToBalance = accountToBalance;
@@ -113,18 +111,33 @@ public class JdbcTransferDao implements TransferDao {
 
                     //create a new transferId
                     try {
-                        transferId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getTransferTypeId(),
+                       int results = jdbcTemplate.queryForObject(sql, Integer.class, newAccountFromBalance,
+                               transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo(), transfer.getTransferTypeId(),
                                 transfer.getTransferStatusId(), transfer.getAccountFrom(),
-                                transfer.getAccountTo(), transfer.getAmount(), newAccountFromBalance,
-                                transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo());
+                                transfer.getAccountTo(), transfer.getAmount());
                     } catch (NullPointerException | EmptyResultDataAccessException ex) {
                         throw new RuntimeException("Something Went Wrong");
                     }
                 }
             }
 
-            return transferId;
+            return transfer.getTransferId();
         }
+
+
+        public void approveRequestTransfer (Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
+
+            BigDecimal amount = transfer.getAmount();
+            //checking to make sure transfer amount isn't more than balance amount & a positive number
+            Boolean validTransfer = (amount.compareTo(accountFromBalance) <= 0) &&
+                    (amount.compareTo(new BigDecimal("0.0")) > 0);
+
+            if (validTransfer) {
+                //if valid run the transfer as follows
+
+
+            }
+        }//end method
         
 
         private Transfer mapRowToTransfer (SqlRowSet results){

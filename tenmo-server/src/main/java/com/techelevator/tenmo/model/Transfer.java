@@ -21,18 +21,23 @@ public class Transfer {
     }
 
     public void setTransferId(int transferId) {
+        this.transferId = transferId;
     }
 
     public void setTransferTypeId(int transferTypeId) {
+        this.transferTypeId = transferTypeId;
     }
 
     public void setTransferStatusId(int transferStatusId) {
+        this.transferStatusId = transferStatusId;
     }
 
     public void setAccountFrom(int accountFrom) {
+        this.accountFrom = accountFrom;
     }
 
     public void setAccountTo(int accountTo) {
+        this.accountTo = accountTo;
     }
 
     public int getAccountFrom() {

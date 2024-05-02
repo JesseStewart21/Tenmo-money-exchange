@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.controller;
 
+import com.techelevator.tenmo.dao.AccountDao;
 import com.techelevator.tenmo.dao.TransferDao;
 import com.techelevator.tenmo.model.Transfer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,8 @@ public class TransferController {
 
     @Autowired
     private TransferDao transferDao;
-
+    @Autowired
+    private AccountDao accountDao;
 
 @RequestMapping(path = "/find_transfer/{transferId}", method = RequestMethod.GET)
     public Transfer findTransferbyId(@PathVariable int transferId){
@@ -27,7 +29,9 @@ public class TransferController {
     }
 
     @RequestMapping(path ="/new", method = RequestMethod.POST)
-    public int createTransfer(@RequestBody Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance){
+    public int createTransfer(@RequestBody Transfer transfer){
+    BigDecimal accountFromBalance = accountDao.getBalanceByAccountId(transfer.getAccountFrom());
+    BigDecimal accountToBalance = accountDao.getBalanceByAccountId(transfer.getAccountTo());
      return transferDao.createTransfer(transfer, accountFromBalance, accountToBalance);
     }
 

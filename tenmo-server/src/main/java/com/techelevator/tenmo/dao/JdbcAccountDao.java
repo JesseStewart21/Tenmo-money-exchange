@@ -40,6 +40,20 @@ public class JdbcAccountDao implements AccountDao{
             return account;
     }
 
+    public BigDecimal getBalanceByAccountId(int accountId){
+        BigDecimal balance;
+
+        String sql = " SELECT balance \n" +
+                " FROM account\n" +
+                " WHERE account_id = ?;";
+        try{
+            balance = jdbcTemplate.queryForObject(sql, BigDecimal.class, accountId);
+        }catch (NullPointerException | EmptyResultDataAccessException ex){
+            throw new RuntimeException("Something went wrong.");
+        }
+    return balance;
+    }
+
 
 
 private Account mapRowToAccount(SqlRowSet results){

@@ -1,9 +1,8 @@
 package com.techelevator.tenmo.controller;
 
 import com.techelevator.tenmo.dao.AccountDao;
-import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.model.Account;
-import com.techelevator.tenmo.model.TransferRequest;
+import com.techelevator.tenmo.model.Transfer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +26,7 @@ public class TransactionController {
         return accountDao.getBalanceByAccountId(accountId);
     }
      @RequestMapping(path ="/account/send_transfer", method = RequestMethod.PUT)
-     public void transfer(@RequestBody TransferRequest transfer){
+     public void transfer(@RequestBody Transfer transfer){
       try {
           accountDao.transfer(transfer);
       }catch (Exception ex){

@@ -1,7 +1,7 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.model.Account;
-import com.techelevator.tenmo.model.TransferRequest;
+import com.techelevator.tenmo.model.Transfer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -57,34 +57,7 @@ public class JdbcAccountDao implements AccountDao{
     }
 
 
-@Transactional
-public void transfer(TransferRequest transfer) {
-        //what is current withdrawing accounts balance
-    BigDecimal startingWithdrawBalance = getBalanceByAccountId(transfer.getWithdrawAccountId());
-    //what will be the new balances if the transfer is successful
-    BigDecimal newWithdrawBalance = getBalanceByAccountId(transfer.getWithdrawAccountId()).subtract(transfer.getAmount());
-    BigDecimal newDepositBalance = getBalanceByAccountId(transfer.getDepositAccountId()).add(transfer.getAmount());
 
-
-//if the amount is equal or less than the withdrawing account's balance, and the amount is not 0 or negative, set to true
-    Boolean results = ((transfer.getAmount()).compareTo(startingWithdrawBalance) <= 0) && ((transfer.getAmount()).compareTo(new BigDecimal("0.0")) > 0);
-
-    if (results) {
-
-        //push the code to the database
-        String sql = "UPDATE\n" +
-                "SET balance = ?\n" +
-                "WHERE account_id = ?;" +
-                "UPDATE\n" +
-                "SET balance = ?\n" +
-                "Where account_id = ?;";
-
-        jdbcTemplate.update(sql, newWithdrawBalance, transfer.getWithdrawAccountId(), newDepositBalance, transfer.getDepositAccountId());
-        //if the transfer should not be completed, throw exception so that it does not post to database
-    }else{
-    throw new RuntimeException("Transfer failed.");
-}
-}
 
 private Account mapRowToAccount(SqlRowSet results){
         Account account = new Account();

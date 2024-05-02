@@ -80,8 +80,10 @@ public void transfer(TransferRequest transfer) {
                 "Where account_id = ?;";
 
         jdbcTemplate.update(sql, newWithdrawBalance, transfer.getWithdrawAccountId(), newDepositBalance, transfer.getDepositAccountId());
+        transfer.setStatus("COMPLETED");
         //if the transfer should not be completed, throw exception so that it does not post to database
     }else{
+        transfer.setStatus("FAILED");
     throw new RuntimeException("Transfer failed.");
 }
 }

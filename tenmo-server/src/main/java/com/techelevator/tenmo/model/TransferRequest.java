@@ -8,6 +8,16 @@ public class TransferRequest {
    private int withdrawAccountId;
    private int depositAccountId;
 
+   private String status = "PENDING";
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public BigDecimal getAmount() {
         return amount;
     }

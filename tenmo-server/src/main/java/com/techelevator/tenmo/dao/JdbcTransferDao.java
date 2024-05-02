@@ -24,9 +24,10 @@ public class JdbcTransferDao implements TransferDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    List<Transfer> findAllBtyId();
+   // List<Transfer> findAllBtyId();
 
 
+    @Override
     public Transfer findTransferById(int transfer_id) {
         Transfer transfer = null;
 

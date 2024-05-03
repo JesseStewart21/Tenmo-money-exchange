@@ -35,9 +35,16 @@ public class TransferController {
      return transferDao.createTransfer(transfer, accountFromBalance, accountToBalance);
     }
 
-
-
-
+    @RequestMapping(path = "/approve", method = RequestMethod.PUT)
+public Boolean approveRequestTransfer(@RequestBody Transfer transfer){
+    BigDecimal accountFromBalance = accountDao.getBalanceByAccountId(transfer.getAccountFrom());
+    BigDecimal accountToBalance = accountDao.getBalanceByAccountId(transfer.getAccountTo());
+    return transferDao.approveRequestTransfer(transfer, accountFromBalance, accountToBalance);
+}
+@RequestMapping(path = "/reject", method = RequestMethod.PUT)
+public Boolean rejectRequestTransfer(@RequestBody Transfer transfer){
+    return transferDao.rejectRequestTransfer(transfer);
+}
 
 
 }

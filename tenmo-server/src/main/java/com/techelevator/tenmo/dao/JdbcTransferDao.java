@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.math.BigDecimal;
@@ -63,7 +64,7 @@ public class JdbcTransferDao implements TransferDao {
         return transfer;
     }
 
-    //when calling from controller, call acct dao and pass it in here...take acct id of from and send to receiver
+   @Override
     public int createTransfer(Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
         //Making sure you can only send to a different account
         Boolean validTransfer = false;
@@ -130,8 +131,8 @@ public class JdbcTransferDao implements TransferDao {
             return transfer.getTransferId();
         }
 
-
-        public void approveRequestTransfer (Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
+@Override
+        public Boolean approveRequestTransfer (Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
 
             BigDecimal amount = transfer.getAmount();
             //checking to make sure transfer amount isn't more than balance amount & a positive number
@@ -139,12 +140,19 @@ public class JdbcTransferDao implements TransferDao {
                     (amount.compareTo(new BigDecimal("0.0")) > 0);
 
             if (validTransfer) {
-                //if valid run the transfer as follows
-
+              //run an update to account balances and to the transfer request to now show as approved
 
             }
+        return true;
         }//end method
-        
+
+    public Boolean rejectRequestTransfer (Transfer transfer){
+        //run update to transfer request to show as rejected.
+        return true;
+    }
+
+
+
 
         private Transfer mapRowToTransfer (SqlRowSet results){
             Transfer transfer = new Transfer();

@@ -72,8 +72,8 @@ public class JdbcTransferDao implements TransferDao {
 
         if (transfer.getAccountFrom() != transfer.getAccountTo()) {
 
-            //==1 is to send money from another acct
-            if (transfer.getTransferTypeId() == 1) {
+            //==2 is to send money from another acct
+            if (transfer.getTransferTypeId() == 2) {
                 int accountFrom = transfer.getAccountFrom();
 
                 //checking to make sure transfer amount isn't more than balance amount & a positive number
@@ -102,7 +102,7 @@ public class JdbcTransferDao implements TransferDao {
                   //tracking balances
                     BigDecimal newAccountFromBalance = accountFromBalance;
                     BigDecimal newAccountToBalance = accountToBalance;
-                    if (transfer.getTransferTypeId() == 1) {
+                    if (transfer.getTransferTypeId() == 2) {
                         //for send transfers, automatically set new balances
                        newAccountFromBalance = accountFromBalance.subtract(amount);
                        newAccountToBalance = accountToBalance.add(amount);
@@ -134,27 +134,56 @@ public class JdbcTransferDao implements TransferDao {
 @Override
         public Boolean approveRequestTransfer (Transfer transfer, BigDecimal accountFromBalance, BigDecimal accountToBalance) {
 
-            BigDecimal amount = transfer.getAmount();
-            //checking to make sure transfer amount isn't more than balance amount & a positive number
-            Boolean validTransfer = (amount.compareTo(accountFromBalance) <= 0) &&
-                    (amount.compareTo(new BigDecimal("0.0")) > 0);
+    BigDecimal amount = transfer.getAmount();
+    //checking to make sure transfer amount isn't more than balance amount & a positive number
+    Boolean validTransfer = (amount.compareTo(accountFromBalance) <= 0) &&
+            (amount.compareTo(new BigDecimal("0.0")) > 0);
 
-            if (validTransfer) {
-              //run an update to account balances and to the transfer request to now show as approved
+    if (validTransfer) {
+        //run an update to account balances and to the transfer request to now show as approved
+        BigDecimal newAccountFromBalance = accountFromBalance.add(amount);
+        BigDecimal newAccountToBalance = accountToBalance.subtract(amount);
 
-            }
+        String sql1 = "UPDATE account\n" +
+                "SET balance = ?\n" +
+                "WHERE account_id = ?;\n" +
+                "UPDATE account\n" +
+                "SET balance = ?\n" +
+                "WHERE account_id =?;\n";
+
+        String sql2 =
+                "UPDATE transfer\n" +
+                "SET transfer_status_id = 2\n" +
+                "WHERE transfer_id =?;";
+
+        try {
+            jdbcTemplate.update(sql1, newAccountFromBalance,
+                    transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo());
+
+            jdbcTemplate.update(sql2, transfer.getTransferId());
+        } catch (NullPointerException | EmptyResultDataAccessException ex) {
+            throw new RuntimeException("Something Went Wrong");
+
+        }
         return true;
-        }//end method
+
+    }return false;
+}
 
     public Boolean rejectRequestTransfer (Transfer transfer){
         //run update to transfer request to show as rejected.
+        String sql = "UPDATE transfer\n" +
+                "SET transfer_status_id = 3\n" +
+                "WHERE transfer_id =?;";
+        try {
+            jdbcTemplate.update(sql,transfer.getTransferId());
+        } catch (NullPointerException | EmptyResultDataAccessException ex){
+            throw new RuntimeException("Something Went Wrong");
+        }
         return true;
     }
 
-
-
-
-        private Transfer mapRowToTransfer (SqlRowSet results){
+            private Transfer mapRowToTransfer (SqlRowSet results){
             Transfer transfer = new Transfer();
 
             int transferId = results.getInt("transfer_id");

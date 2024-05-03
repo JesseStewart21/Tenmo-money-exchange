@@ -4,6 +4,7 @@ import com.techelevator.tenmo.dao.AccountDao;
 import com.techelevator.tenmo.dao.TransferDao;
 import com.techelevator.tenmo.model.Transfer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.method.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -35,14 +36,16 @@ public class TransferController {
      return transferDao.createTransfer(transfer, accountFromBalance, accountToBalance);
     }
 
-    @RequestMapping(path = "/approve", method = RequestMethod.PUT)
-public Boolean approveRequestTransfer(@RequestBody Transfer transfer){
+    @RequestMapping(path = "/approve/{transferId}", method = RequestMethod.GET)
+public Boolean approveRequestTransfer(@PathVariable int transferId){
+    Transfer transfer = transferDao.findTransferById(transferId);
     BigDecimal accountFromBalance = accountDao.getBalanceByAccountId(transfer.getAccountFrom());
     BigDecimal accountToBalance = accountDao.getBalanceByAccountId(transfer.getAccountTo());
     return transferDao.approveRequestTransfer(transfer, accountFromBalance, accountToBalance);
 }
-@RequestMapping(path = "/reject", method = RequestMethod.PUT)
-public Boolean rejectRequestTransfer(@RequestBody Transfer transfer){
+@RequestMapping(path = "/reject/{transferId}", method = RequestMethod.GET)
+public Boolean rejectRequestTransfer(@PathVariable int transferId){
+    Transfer transfer = transferDao.findTransferById(transferId);
     return transferDao.rejectRequestTransfer(transfer);
 }
 

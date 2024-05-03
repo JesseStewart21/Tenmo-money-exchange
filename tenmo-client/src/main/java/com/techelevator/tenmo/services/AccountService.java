@@ -42,6 +42,7 @@ public class AccountService {
 
 
 
+
     private HttpEntity<Void> makeAuthEntity() {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(authToken);

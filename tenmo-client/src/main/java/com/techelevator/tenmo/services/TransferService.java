@@ -1,9 +1,10 @@
 package com.techelevator.tenmo.services;
 
 
-import com.techelevator.tenmo.model.Account;
+
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.util.BasicLogger;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientResponseException;
@@ -11,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.web.client.ResourceAccessException;
 
-import java.math.BigDecimal;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,16 +31,28 @@ public class TransferService {
         List<Transfer> transfers = new ArrayList<>();
 
         try {
-            ResponseEntity<Transfer> response = restTemplate.exchange(API_BASE_URL +
-                    "/transfer/" + accountId, HttpMethod.GET, makeAuthEntity(), Transfer.class);
-            transfers = (List<Transfer>) response.getBody();
+            ResponseEntity<List<Transfer>> response = restTemplate.exchange(API_BASE_URL +
+                    "/transfer/" + accountId, HttpMethod.GET, makeAuthEntity(), new ParameterizedTypeReference<List<Transfer>>() {
+
+            });
+            transfers = response.getBody();
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         }
         return transfers;
     }
 
+public int createTransfer(Transfer transfer){
+        int transferId = 0;
 
+        try{
+            ResponseEntity<Integer> response = restTemplate.exchange(API_BASE_URL +
+                    "/transfer/new", HttpMethod.POST, makeAuthEntity(), Integer.class);
+            transferId = response.getBody();
+        }catch (RestClientResponseException | ResourceAccessException e) {
+            BasicLogger.log(e.getMessage());
+        } return transferId;
+}
 
 
 

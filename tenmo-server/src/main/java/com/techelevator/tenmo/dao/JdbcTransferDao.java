@@ -69,6 +69,7 @@ public class JdbcTransferDao implements TransferDao {
         //Making sure you can only send to a different account
         Boolean validTransfer = false;
         BigDecimal amount = transfer.getAmount();
+        int transferId = 0;
 
         if (transfer.getAccountFrom() != transfer.getAccountTo()) {
 
@@ -125,10 +126,10 @@ public class JdbcTransferDao implements TransferDao {
                     } catch (NullPointerException | EmptyResultDataAccessException ex) {
                         throw new RuntimeException("Something Went Wrong");
                     }
-                }
+                } transferId = transfer.getTransferId();
             }
 
-            return transfer.getTransferId();
+            return transferId;
         }
 
 @Override

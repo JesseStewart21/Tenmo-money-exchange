@@ -21,6 +21,8 @@ public class App {
     private final AuthenticationService authenticationService = new AuthenticationService(API_BASE_URL);
 
     private AccountService accountService = new AccountService();
+
+    private TransferService transferService = new TransferService();
     private AuthenticatedUser currentUser;
 
     public static void main(String[] args) {
@@ -68,6 +70,7 @@ public class App {
             consoleService.printErrorMessage();
         } else {
             accountService.setAuthToken(currentUser.getToken());
+            transferService.setAuthToken(currentUser.getToken());
         }
     }
 
@@ -109,28 +112,140 @@ public class App {
         int userId = currentUser.getUser().getId();
         Account account = accountService.findAccountByUserId(userId);
         int accountId = account.getAccountId();
-        List<Transfer> transfers = null;
+        List<Transfer> transfers = transferService.findAllById(accountId);
 
         System.out.println("This is your transaction history");
+        System.out.println("______________________________");
+
         for(Transfer currentTransfer : transfers){
-            //currentTransfer
+            int transferId = currentTransfer.getTransferId();
+            BigDecimal amount = currentTransfer.getAmount();
+            int requestType = currentTransfer.getTransferTypeId();
+            int accountToId = currentTransfer.getAccountTo();
+            int accountFromId = currentTransfer.getAccountFrom();
+            int transferStatus = currentTransfer.getTransferStatusId();
+
+            String requestTypeStr = "";
+            String status = "";
+
+            if(requestType == 1) {
+                requestTypeStr = "sent a transfer to";
+            }else if (requestType == 2){
+                requestTypeStr = "requested a transfer from";
+            }
+
+            if (transferStatus == 1) {
+                status = "Pending";
+            }else if (transferStatus == 2) {
+                status = "Approved";
+            }else if (transferStatus == 3) {
+                status = "Rejected";
+            }
+
+           //we know you wouldn't pass back someone else's account number, but we did not write the methods to support
+            //pulling another user's name.  Sorry!
+
+            System.out.println("Transfer #" + transferId);
+            System.out.println("Amount: $" + amount);
+            System.out.println(accountFromId +" "+ requestTypeStr +" "+ accountToId);
+            System.out.println("Transfer Status: " + status);
+            System.out.println("______________________________");
         }
 		
 	}
 
 	private void viewPendingRequests() {
 		// TODO Auto-generated method stub
-		
+
+        int userId = currentUser.getUser().getId();
+        Account account = accountService.findAccountByUserId(userId);
+        int accountId = account.getAccountId();
+        List<Transfer> transfers = transferService.findAllById(accountId);
+
+        System.out.println("This is your transaction history");
+        System.out.println("______________________________");
+
+        for(Transfer currentTransfer : transfers) {
+            int transferId = currentTransfer.getTransferId();
+            BigDecimal amount = currentTransfer.getAmount();
+            int requestType = currentTransfer.getTransferTypeId();
+            int accountToId = currentTransfer.getAccountTo();
+            int accountFromId = currentTransfer.getAccountFrom();
+            int transferStatus = currentTransfer.getTransferStatusId();
+
+            String requestTypeStr = "";
+            String status = "";
+
+            if (requestType == 1) {
+                requestTypeStr = "sent a transfer to";
+            } else if (requestType == 2) {
+                requestTypeStr = "requested a transfer from";
+            }
+
+            if (transferStatus == 1) {
+                status = "Pending";
+                //we know you wouldn't pass back someone else's account number, but we did not write the methods to support
+                //pulling another user's name.  Sorry!
+
+                System.out.println("Transfer #" + transferId);
+                System.out.println("Amount: $" + amount);
+                System.out.println(accountFromId + " " + requestTypeStr + " " + accountToId);
+                System.out.println("Transfer Status: " + status);
+                System.out.println("______________________________");
+            }
+
+    }
 	}
 
 	private void sendBucks() {
 		// TODO Auto-generated method stub
-		
+       String prompt = "What is the account number you will be sending to?";
+        int accountToId = consoleService.promptForInt(prompt);
+        String prompt2 = "How much are you sending?";
+        BigDecimal amount = consoleService.promptForBigDecimal(prompt2);
+
+        Transfer newTransfer = new Transfer();
+        int userId = currentUser.getUser().getId();
+        Account account = accountService.findAccountByUserId(userId);
+        int accountFromId = account.getAccountId();
+        int transferTypeId = 2;
+        int transferStatusId = 3;
+
+        newTransfer.setAccountTo(accountToId);
+        newTransfer.setAccountFrom(accountFromId);
+        newTransfer.setAmount(amount);
+        newTransfer.setTransferStatusId(transferStatusId);
+        newTransfer.setTransferTypeId(transferTypeId);
+
+        int transferId = transferService.createTransfer(newTransfer);
+
+        System.out.println("Your transfer Id is: " + transferId);
 	}
 
 	private void requestBucks() {
 		// TODO Auto-generated method stub
-		
+        String prompt = "What is the account number you will be requesting from?";
+        int accountToId = consoleService.promptForInt(prompt);
+        String prompt2 = "How much are you requesting?";
+        BigDecimal amount = consoleService.promptForBigDecimal(prompt2);
+
+        Transfer newTransfer = new Transfer();
+        int userId = currentUser.getUser().getId();
+        Account account = accountService.findAccountByUserId(userId);
+        int accountFromId = account.getAccountId();
+        int transferTypeId = 1;
+        int transferStatusId = 1;
+
+        newTransfer.setAccountTo(accountToId);
+        newTransfer.setAccountFrom(accountFromId);
+        newTransfer.setAmount(amount);
+        newTransfer.setTransferStatusId(transferStatusId);
+        newTransfer.setTransferTypeId(transferTypeId);
+
+        int transferId = transferService.createTransfer(newTransfer);
+
+        System.out.println("Your transfer Id is: " + transferId);
+    }
 	}
 
-}
+

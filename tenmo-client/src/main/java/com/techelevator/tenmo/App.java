@@ -1,9 +1,17 @@
 package com.techelevator.tenmo;
 
+import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.UserCredentials;
+import com.techelevator.tenmo.services.AccountService;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
+import com.techelevator.tenmo.services.TransferService;
+
+import java.math.BigDecimal;
+import java.security.Principal;
+import java.util.List;
 
 public class App {
 
@@ -12,6 +20,7 @@ public class App {
     private final ConsoleService consoleService = new ConsoleService();
     private final AuthenticationService authenticationService = new AuthenticationService(API_BASE_URL);
 
+    private AccountService accountService = new AccountService();
     private AuthenticatedUser currentUser;
 
     public static void main(String[] args) {
@@ -57,6 +66,8 @@ public class App {
         currentUser = authenticationService.login(credentials);
         if (currentUser == null) {
             consoleService.printErrorMessage();
+        } else {
+            accountService.setAuthToken(currentUser.getToken());
         }
     }
 
@@ -85,12 +96,25 @@ public class App {
     }
 
 	private void viewCurrentBalance() {
-		// TODO Auto-generated method stub
-		
+        int userId = currentUser.getUser().getId();
+        Account account = accountService.findAccountByUserId(userId);
+        BigDecimal balance= account.getBalance();
+        System.out.println("Your current balance is $" + balance);
+
 	}
 
 	private void viewTransferHistory() {
 		// TODO Auto-generated method stub
+
+        int userId = currentUser.getUser().getId();
+        Account account = accountService.findAccountByUserId(userId);
+        int accountId = account.getAccountId();
+        List<Transfer> transfers = null;
+
+        System.out.println("This is your transaction history");
+        for(Transfer currentTransfer : transfers){
+            //currentTransfer
+        }
 		
 	}
 

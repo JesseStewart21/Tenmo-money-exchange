@@ -104,12 +104,13 @@ public class JdbcTransferDao implements TransferDao {
                     BigDecimal newAccountFromBalance = accountFromBalance;
                     BigDecimal newAccountToBalance = accountToBalance;
                     if (transfer.getTransferTypeId() == 2) {
-                        //for send transfers, automatically set new balances
+                        //for send transfers, automatically set new balances and approve transfer
                        newAccountFromBalance = accountFromBalance.subtract(amount);
                        newAccountToBalance = accountToBalance.add(amount);
+                      // transfer.setTransferStatusId(2);
                     } else {
                         //for request transfers, build the transfer but set status to pending, and do not change the amounts.
-                        transfer.setTransferStatusId(1);
+                        //transfer.setTransferStatusId(1);
                     }
 
 
@@ -118,15 +119,15 @@ public class JdbcTransferDao implements TransferDao {
                         jdbcTemplate.update(sql1, newAccountFromBalance,
                                 transfer.getAccountFrom(), newAccountToBalance, transfer.getAccountTo());
 
-                        int results2 = jdbcTemplate.queryForObject(sql2, Integer.class, transfer.getTransferTypeId(),
+                         transferId = jdbcTemplate.queryForObject(sql2, Integer.class, transfer.getTransferTypeId(),
                                 transfer.getTransferStatusId(), transfer.getAccountFrom(),
                                 transfer.getAccountTo(), transfer.getAmount());
 
 
                     } catch (NullPointerException | EmptyResultDataAccessException ex) {
-                        throw new RuntimeException("Something Went Wrong");
+                        throw new RuntimeException("Something went wrong in building the transfer request");
                     }
-                } transferId = transfer.getTransferId();
+                }
             }
 
             return transferId;

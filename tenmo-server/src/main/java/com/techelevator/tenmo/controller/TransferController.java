@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/transfer")
-@PreAuthorize("isAunthenticated()")
+@PreAuthorize("isAuthenticated()")
 public class TransferController {
 
     @Autowired

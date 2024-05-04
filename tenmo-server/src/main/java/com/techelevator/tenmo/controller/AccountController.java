@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
-@PreAuthorize("isAunthenticated()")
+@PreAuthorize("isAuthenticated()")
 public class AccountController {
     @Autowired
     private AccountDao accountDao;

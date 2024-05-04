@@ -30,7 +30,7 @@ public class AccountService {
 
         try{
             ResponseEntity<Account> response = restTemplate.exchange(API_BASE_URL +
-                    "/account/" + userId, HttpMethod.GET, makeAuthEntity(), Account.class);
+                    "account/" + userId, HttpMethod.GET, makeAuthEntity(), Account.class);
             account = response.getBody();
         } catch (RestClientResponseException | ResourceAccessException ex){
             BasicLogger.log(ex.getMessage());

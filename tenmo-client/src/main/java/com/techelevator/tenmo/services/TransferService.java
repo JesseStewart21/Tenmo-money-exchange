@@ -47,18 +47,41 @@ public int createTransfer(Transfer transfer){
 
         try{
             ResponseEntity<Integer> response = restTemplate.exchange(API_BASE_URL +
-                    "/transfer/new", HttpMethod.POST, makeAuthEntity(), Integer.class);
+                    "/transfer/new", HttpMethod.POST, makeTransferEntity(transfer), Integer.class);
             transferId = response.getBody();
         }catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         } return transferId;
 }
 
+public boolean approveTransfer(int transferId) {
+    boolean approved = false;
+    try {
+        ResponseEntity<Boolean> response = restTemplate.exchange(API_BASE_URL + "transfer/approve/" +
+                transferId, HttpMethod.GET, makeAuthEntity(), Boolean.class);
+        approved = response.getBody();
+    }catch (RestClientResponseException | ResourceAccessException e){
+        BasicLogger.log(e.getMessage());
+    }return approved;
+}
 
+    public boolean rejectTransfer(int transferId) {
+        boolean rejected = false;
+        try {
+            ResponseEntity<Boolean> response = restTemplate.exchange(API_BASE_URL + "transfer/reject/" +
+                    transferId, HttpMethod.GET, makeAuthEntity(), Boolean.class);
+            rejected = response.getBody();
+        }catch (RestClientResponseException | ResourceAccessException e){
+            BasicLogger.log(e.getMessage());
+        }return rejected;
+    }
 
-
-
-
+    private HttpEntity<Transfer> makeTransferEntity(Transfer transfer) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(authToken);
+        return new HttpEntity<>(transfer, headers);
+    }
 
     private HttpEntity<Void> makeAuthEntity() {
         HttpHeaders headers = new HttpHeaders();
